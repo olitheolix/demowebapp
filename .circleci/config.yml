@@ -34,5 +34,4 @@ jobs:
           docker push "$IMAGE_NAME"
 
           # Send Slack notification.
-          curl -X POST -H 'Content-type: application/json' --data
-          '{"text":"Successfully built '"$IMAGE_NAME"'"}' https://hooks.slack.com/services/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
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"Successfully built '"$IMAGE_NAME"'"}' https://hooks.slack.com/services/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
