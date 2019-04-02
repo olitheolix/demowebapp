@@ -26,6 +26,6 @@ jobs:
       - run: |
           # Image tag, eg "02-04-2019-153701-a402c7a".
           TAG=`date +%d-%m-%Y-%H%M%S`-$CIRCLE_SHA1
-          docker build -t   olitheolix/demowebapp:$TAG .
+          docker build -t olitheolix/demowebapp:$TAG .
           docker login -u olitheolix -p $DOCKER_PASS
-          docker push CircleCI-Public/circleci-demo-docker:$TAG
+          docker push olitheolix/demowebapp:$TAG
