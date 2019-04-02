@@ -26,6 +26,13 @@ jobs:
       - run: |
           # Image tag, eg "02-04-2019-153701-a402c7a".
           TAG=`date +%d-%m-%Y-%H%M%S`-$CIRCLE_SHA1
+          IMAGE_NAME=olitheolix/demowebapp:$TAG
+
+          # Build and push Docker image.
           docker build -t olitheolix/demowebapp:$TAG .
           docker login -u olitheolix -p $DOCKER_PASS
-          docker push olitheolix/demowebapp:$TAG
+          docker push "$IMAGE_NAME"
+
+          # Send Slack notification.
+          curl -X POST -H 'Content-type: application/json' --data
+          '{"text":"Successfully built '"$IMAGE_NAME"'"}' https://hooks.slack.com/services/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
