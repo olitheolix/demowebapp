@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: golang:1.6.4-jessie   # (1)
+      - image: golang:1.12.1-stretch   # (1)
     working_directory: /go/src/github.com/CircleCI-Public/circleci-demo-docker
     steps:
       - checkout
