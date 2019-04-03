@@ -2,47 +2,51 @@ orbs:
   aws-ecr: circleci/aws-ecr@3.1.0
 version: 2.1
 
-jobs:
-  build:
-    docker:
-      - image: golang:1.12.1-stretch   # (1)
-    working_directory: /go/src/github.com/CircleCI-Public/circleci-demo-docker
-    steps:
-      - checkout
-      # ... steps for building/testing app ...
-
-      - setup_remote_docker:   # (2)
-          docker_layer_caching: true # (3)
-
-      # Use a primary image that already has Docker (recommended)
-      # or install it during a build like we do here
-      - run:
-          name: Install Docker client
-          command: |
-            set -x
-            VER="17.03.0-ce"
-            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-            mv /tmp/docker/* /usr/bin
-
-      # Build and push Docker image.
-      - run: |
-          # Image tag, eg "02042019-a402c7a".
-          SHA=$(echo $CIRCLE_SHA1 | sed 's/^\(.\{7\}\).*/\1/g')
-          TAG=`date +%y%m%d`-$SHA
-          IMAGE_NAME=olitheolix/demo:$TAG
-
-          # Build and push Docker image.
-          docker build -t "$IMAGE_NAME" .
-          docker login -u olitheolix -p $DOCKER_PASS
-          docker push "$IMAGE_NAME"
-
+workflows:
+  build_and_push_image:
+    jobs:
       - aws-ecr/build_and_push_image:
           account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           repo: infra-demo
           region: ${AWS_DEFAULT_REGION}
           tag: "hello-${CIRCLE_SHA1}"
 
-      - notify: |
-          # Send Slack notification.
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"Successfully built '"$IMAGE_NAME"'"}' https://hooks.slack.com/services/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
+  manual:
+    jobs:
+      build:
+        docker:
+          - image: golang:1.12.1-stretch   # (1)
+        working_directory: /go/src/github.com/CircleCI-Public/circleci-demo-docker
+        steps:
+          - checkout
+          # ... steps for building/testing app ...
+
+          - setup_remote_docker:   # (2)
+              docker_layer_caching: true # (3)
+
+          # Use a primary image that already has Docker (recommended)
+          # or install it during a build like we do here
+          - run:
+              name: Install Docker client
+              command: |
+                set -x
+                VER="17.03.0-ce"
+                curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+                tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+                mv /tmp/docker/* /usr/bin
+
+          # Build and push Docker image.
+          - run: |
+              # Image tag, eg "02042019-a402c7a".
+              SHA=$(echo $CIRCLE_SHA1 | sed 's/^\(.\{7\}\).*/\1/g')
+              TAG=`date +%y%m%d`-$SHA
+              IMAGE_NAME=olitheolix/demo:$TAG
+
+              # Build and push Docker image.
+              docker build -t "$IMAGE_NAME" .
+              docker login -u olitheolix -p $DOCKER_PASS
+              docker push "$IMAGE_NAME"
+
+          - notify: |
+              # Send Slack notification.
+              curl -X POST -H 'Content-type: application/json' --data '{"text":"Successfully built '"$IMAGE_NAME"'"}' https://hooks.slack.com/services/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
