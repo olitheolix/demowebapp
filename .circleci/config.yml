@@ -1,4 +1,7 @@
-version: 2
+orbs:
+  aws-ecr: circleci/aws-ecr@3.1.0
+version: 2.1
+
 jobs:
   build:
     docker:
@@ -34,5 +37,12 @@ jobs:
           docker login -u olitheolix -p $DOCKER_PASS
           docker push "$IMAGE_NAME"
 
+      - aws-ecr/build_and_push_image:
+          account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+          repo: infra-demo
+          region: ${AWS_DEFAULT_REGION}
+          tag: "hello-${CIRCLE_SHA1}"
+
+      - notify: |
           # Send Slack notification.
           curl -X POST -H 'Content-type: application/json' --data '{"text":"Successfully built '"$IMAGE_NAME"'"}' https://hooks.slack.com/services/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
