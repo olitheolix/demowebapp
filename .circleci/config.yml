@@ -3,6 +3,7 @@ orbs:
 version: 2.1
 
 workflows:
+  # Trigger
   build_and_push_image:
     jobs:
       - aws-ecr/build_and_push_image:
