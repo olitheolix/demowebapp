@@ -1,3 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: deployer
+
 ---
 
 # The service account for `deployer`.
@@ -5,7 +10,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: deployer
-  namespace: default
+  namespace: deployer
 
 ---
 
@@ -48,16 +53,17 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: deployer
-  namespace: default
+  namespace: deployer
 
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: demo
+  name: deployer
+  namespace: deployer
   labels:
-    app: demo
+    app: deployer
 spec:
   type: ClusterIP
   ports:
@@ -66,28 +72,29 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: demo
+    app: deployer
 
 ---
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: demo
+  name: deployer
+  namespace: deployer
   labels:
-    app: demo
+    app: deployer
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: demo
+      app: deployer
   template:
     metadata:
       labels:
-        app: demo
+        app: deployer
     spec:
       serviceAccountName: deployer
       containers:
-        - name: demo
+        - name: deployer
           image: olitheolix/demo:v1
           imagePullPolicy: IfNotPresent
           ports:

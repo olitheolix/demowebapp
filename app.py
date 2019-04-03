@@ -92,7 +92,7 @@ def patch_deployment(docker_image: str, env_vars: list):
     logit.info(f"Kubernetes server at {config.url}")
     logit.info(f"Kubernetes version is {config.version}")
 
-    url = f"{config.url}/apis/extensions/v1beta1/namespaces/default/deployments/demo"
+    url = f"{config.url}/apis/extensions/v1beta1/namespaces/deployer/deployments/demo"
     containers = {
         "name": "demo",
         "image": docker_image,
