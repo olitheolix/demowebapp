@@ -24,8 +24,9 @@ jobs:
 
       # Build and push Docker image.
       - run: |
-          # Image tag, eg "02-04-2019-153701-a402c7a".
-          TAG=`date +%d-%m-%Y-%H%M%S`-$CIRCLE_SHA1
+          # Image tag, eg "02042019-a402c7a".
+          SHA=$(echo $CIRCLE_SHA1 | sed 's/^\(.\{7\}\).*/\1/g')
+          TAG=`date +%d%m%Y`-$SHA
           IMAGE_NAME=olitheolix/demowebapp:$TAG
 
           # Build and push Docker image.
