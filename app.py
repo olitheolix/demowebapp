@@ -12,9 +12,9 @@ def hello_world():
     return 'Hello, World!'
 
 
-@app.route('/v1/staging/demo', methods=['GET', 'POST'])
+@app.route('/v1/staging/demo', methods=['GET', 'PATCH'])
 def login():
-    if request.method == 'POST':
+    if request.method == 'PATCH':
         payload = request.get_json()
         image = payload["image"]
         env_vars = [{"name": k, "value": v} for k, v in payload["env"].items()]
