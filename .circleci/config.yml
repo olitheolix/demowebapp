@@ -6,7 +6,5 @@ workflows:
   build_and_push_image:
     jobs:
       - aws-ecr/build_and_push_image:
-          account-url: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
           repo: infra-demo
-          region: ${AWS_DEFAULT_REGION}
-          tag: "hello-${CIRCLE_SHA1}"
+          tag: "hello"
