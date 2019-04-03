@@ -1,4 +1,57 @@
 ---
+
+# The service account for `deployer`.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: deployer
+  namespace: default
+
+---
+
+# Define a Role that has sufficient privileges to use all `deployer`
+# features. Trim the role to support your use case, eg "get" and "list" access
+# to deployments to monitor deployment drifts.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: deployer
+rules:
+- apiGroups: ["", "apps", "rbac.authorization.k8s.io", "extensions"]
+  resources:
+  - clusterrolebindings
+  - clusterroles
+  - configmaps
+  - daemonsets
+  - deployments
+  - ingresses
+  - namespaces
+  - persistentvolumeclaims
+  - rolebindings
+  - roles
+  - secrets
+  - services
+  - statefulsets
+  verbs: ["get", "list", "update", "patch"]
+
+---
+
+# Assign the Role to the service account defined earlier.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: deployer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: deployer
+subjects:
+- kind: ServiceAccount
+  name: deployer
+  namespace: default
+
+---
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -32,9 +85,10 @@ spec:
       labels:
         app: demo
     spec:
+      serviceAccountName: deployer
       containers:
         - name: demo
-          image: olitheolix/demo:190403-17514dc
+          image: olitheolix/demo:v1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
