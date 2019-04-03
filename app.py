@@ -1,10 +1,17 @@
+"""PoC of a deployment API."""
+
 import logging
 import os
 
 import k8s
 
 from flask import Flask, request, jsonify
+
+# Global Flask app handle.
 app = Flask(__name__)
+
+# Convenience: global logger instance to avoid repetitive code.
+logit = logging.getLogger("square")
 
 
 @app.route('/')
@@ -13,24 +20,28 @@ def hello_world():
 
 
 @app.route('/v1/staging/demo', methods=['GET', 'PATCH'])
-def login():
+def deployer():
+    """Update the deployment programmatically"""
     if request.method == 'PATCH':
+        # Inspect the payload and extract the image name and environment variables.
         payload = request.get_json()
         image = payload["image"]
         env_vars = [{"name": k, "value": v} for k, v in payload["env"].items()]
+
+        # Contact K8s to patch the deployment.
         data, err = patch_deployment(image, env_vars)
+
+        # Return K8s response.
         return jsonify({"data": data, "err": err})
     else:
+        # Return JSON payload with all env vars that start with "showme_" plus
+        # the hostname.
         envs = {
             k: v for k, v in os.environ.items()
             if k.lower().startswith('showme')
         }
         envs["hostname"] = os.environ.get("HOSTNAME", "Unknown")
         return jsonify(envs)
-
-
-# Convenience: global logger instance to avoid repetitive code.
-logit = logging.getLogger("square")
 
 
 def setup_logging(log_level: int) -> None:
