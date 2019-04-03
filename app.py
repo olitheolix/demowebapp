@@ -17,7 +17,8 @@ def login():
     if request.method == 'POST':
         payload = request.get_json()
         image = payload["image"]
-        data, err = patch_deployment(image)
+        env_vars = [{"name": k, "value": v} for k, v in payload["env"].items()]
+        data, err = patch_deployment(image, env_vars)
         return jsonify({"data": data, "err": err})
     else:
         return "Received GET"
@@ -54,7 +55,7 @@ def setup_logging(log_level: int) -> None:
     logit.info(f"Set log level to {level}")
 
 
-def patch_deployment(docker_image: str):
+def patch_deployment(docker_image: str, env_vars: list):
     # Create a `requests` client with proper security certificates to access
     # K8s API.
     kubeconfig = os.path.expanduser("~/.kube/config")
@@ -76,7 +77,11 @@ def patch_deployment(docker_image: str):
     logit.info(f"Kubernetes version is {config.version}")
 
     url = f"{config.url}/apis/extensions/v1beta1/namespaces/default/deployments/demo"
-    containers = {"name": "demo", "image": docker_image}
+    containers = {
+        "name": "demo",
+        "image": docker_image,
+        "env": env_vars,
+    }
     payload = {"spec": {"template": {"spec": {"containers": [containers]}}}}
     logit.info(f"Patching <demo> container to {docker_image}")
     return k8s.patch(client, url, payload)
