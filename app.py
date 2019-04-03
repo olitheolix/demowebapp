@@ -21,7 +21,12 @@ def login():
         data, err = patch_deployment(image, env_vars)
         return jsonify({"data": data, "err": err})
     else:
-        return "Received GET"
+        envs = {
+            k: v for k, v in os.environ.items()
+            if k.lower().startswith('showme')
+        }
+        envs["hostname"] = os.environ.get("HOSTNAME", "Unknown")
+        return jsonify(envs)
 
 
 # Convenience: global logger instance to avoid repetitive code.
