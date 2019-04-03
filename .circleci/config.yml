@@ -40,13 +40,12 @@ jobs:
             # Send Slack notification.
             curl -X POST -H 'Content-type: application/json' --data '{"text":"Successfully built '"$IMAGE_NAME"'"}' https://hooks.slack.com/services/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
 
-        - aws-ecr/build_and_push_image:
-            repo: infra-demo
-            tag: "$TAG"
-
 
 workflows:
   # Trigger
   build_and_push_image:
     jobs:
       - build
+      - aws-ecr/build_and_push_image:
+          repo: infra-demo
+          tag: "$CIRCLE_SHA1"
