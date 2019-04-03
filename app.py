@@ -1,3 +1,8 @@
+import logging
+import os
+
+import k8s
+
 from flask import Flask, request, jsonify
 app = Flask(__name__)
 
@@ -7,13 +12,83 @@ def hello_world():
     return 'Hello, World!'
 
 
-@app.route('/v1/staging/myapp', methods=['GET', 'POST'])
+@app.route('/v1/staging/demo', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        return jsonify({"status": "ok"})
+        payload = request.get_json()
+        image = payload["image"]
+        data, err = patch_deployment(image)
+        return jsonify({"data": data, "err": err})
     else:
         return "Received GET"
 
 
-if __name__ == '__main__':
+# Convenience: global logger instance to avoid repetitive code.
+logit = logging.getLogger("square")
+
+
+def setup_logging(log_level: int) -> None:
+    """Configure logging at `log_level`."""
+    # Pick the correct log level.
+    if log_level == 0:
+        level = "ERROR"
+    elif log_level == 1:
+        level = "WARNING"
+    elif log_level == 2:
+        level = "INFO"
+    else:
+        level = "DEBUG"
+
+    # Create logger.
+    logger = logging.getLogger("square")
+    logger.setLevel(level)
+
+    # Configure stdout handler.
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+
+    # Attach stdout handlers to the `square` logger.
+    logger.addHandler(ch)
+    logit.info(f"Set log level to {level}")
+
+
+def patch_deployment(docker_image: str):
+    # Create a `requests` client with proper security certificates to access
+    # K8s API.
+    kubeconfig = os.path.expanduser("~/.kube/config")
+    try:
+        config = k8s.load_auto_config(kubeconfig, None, disable_warnings=True)
+        assert config
+
+        client = k8s.session(config)
+        assert client
+
+        # Update the config with the correct K8s API version.
+        config, err = k8s.version(config, client)
+        assert not err and config
+    except AssertionError:
+        return 1
+
+    # Log the K8s API address and version.
+    logit.info(f"Kubernetes server at {config.url}")
+    logit.info(f"Kubernetes version is {config.version}")
+
+    url = f"{config.url}/apis/extensions/v1beta1/namespaces/default/deployments/demo"
+    containers = {"name": "demo", "image": docker_image}
+    payload = {"spec": {"template": {"spec": {"containers": [containers]}}}}
+    logit.info(f"Patching <demo> container to {docker_image}")
+    return k8s.patch(client, url, payload)
+
+
+def main():
+    # Initialise logging.
+    setup_logging(2)
+
+    # Start Flask.
     app.run(debug=True, host='0.0.0.0', port=8080)
+
+
+if __name__ == '__main__':
+    main()
