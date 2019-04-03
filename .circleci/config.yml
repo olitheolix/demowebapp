@@ -30,7 +30,7 @@ jobs:
           IMAGE_NAME=olitheolix/demowebapp:$TAG
 
           # Build and push Docker image.
-          docker build -t olitheolix/demowebapp:$TAG .
+          docker build -t olitheolix/demo:$TAG .
           docker login -u olitheolix -p $DOCKER_PASS
           docker push "$IMAGE_NAME"
 

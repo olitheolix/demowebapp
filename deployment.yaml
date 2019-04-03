@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
         - name: demo
-          image: olitheolix/demowebapp:02-04-2019-204901-7d21c51f001ac7585c6f5cc5b5580eee22fcfd14
+          image: olitheolix/demo:190403-17514dc
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
