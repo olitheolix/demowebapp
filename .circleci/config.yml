@@ -27,10 +27,10 @@ jobs:
           # Image tag, eg "02042019-a402c7a".
           SHA=$(echo $CIRCLE_SHA1 | sed 's/^\(.\{7\}\).*/\1/g')
           TAG=`date +%y%m%d`-$SHA
-          IMAGE_NAME=olitheolix/demowebapp:$TAG
+          IMAGE_NAME=olitheolix/demo:$TAG
 
           # Build and push Docker image.
-          docker build -t olitheolix/demo:$TAG .
+          docker build -t "$IMAGE_NAME" .
           docker login -u olitheolix -p $DOCKER_PASS
           docker push "$IMAGE_NAME"
 
