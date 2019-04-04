@@ -5,7 +5,7 @@ import os
 
 import k8s
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 
 # Global Flask app handle.
 app = Flask(__name__)
@@ -19,9 +19,12 @@ def hello_world():
     return 'Hello, World!'
 
 
-@app.route('/v1/staging/demo', methods=['GET', 'PATCH'])
-def deployer():
+@app.route('/v1/staging/<deployment>', methods=['GET', 'PATCH'])
+def deployer(deployment):
     """Update the deployment programmatically"""
+    if "/" in deployment:
+        abort(404)
+
     if request.method == 'PATCH':
         # Inspect the payload and extract the image name and environment variables.
         payload = request.get_json()
@@ -29,7 +32,7 @@ def deployer():
         env_vars = [{"name": k, "value": v} for k, v in payload["env"].items()]
 
         # Contact K8s to patch the deployment.
-        data, err = patch_deployment(image, env_vars)
+        data, err = patch_deployment(deployment, image, env_vars)
 
         # Return K8s response.
         return jsonify({"data": data, "err": err})
@@ -41,6 +44,7 @@ def deployer():
             if k.lower().startswith('showme')
         }
         envs["hostname"] = os.environ.get("HOSTNAME", "Unknown")
+        envs["deployment"] = deployment
         return jsonify(envs)
 
 
@@ -71,7 +75,7 @@ def setup_logging(log_level: int) -> None:
     logit.info(f"Set log level to {level}")
 
 
-def patch_deployment(docker_image: str, env_vars: list):
+def patch_deployment(deployment, docker_image: str, env_vars: list):
     # Create a `requests` client with proper security certificates to access
     # K8s API.
     kubeconfig = os.path.expanduser("~/.kube/config")
@@ -92,7 +96,10 @@ def patch_deployment(docker_image: str, env_vars: list):
     logit.info(f"Kubernetes server at {config.url}")
     logit.info(f"Kubernetes version is {config.version}")
 
-    url = f"{config.url}/apis/extensions/v1beta1/namespaces/deployer/deployments/deployer"
+    url = (
+        f"{config.url}/apis/extensions/v1beta1/namespaces/"
+        f"deployer/deployments/{deployment}"
+    )
     containers = {
         "name": "demo",
         "image": docker_image,
